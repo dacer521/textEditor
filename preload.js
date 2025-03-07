@@ -3,7 +3,7 @@ const path = require("path");
 
 contextBridge.exposeInMainWorld("ipcRender", {
     send: (channel, data) => {
-        let validChannels = ["create-document", "openDocumentTriggered", "file-content-updated"]; // Add file-content-updated
+        let validChannels = ["create-document", "openDocumentTriggered", "file-content-updated"];
         if (validChannels.includes(channel)) {
             ipcRenderer.send(channel, data);
         }
@@ -18,4 +18,5 @@ contextBridge.exposeInMainWorld("ipcRender", {
 
 contextBridge.exposeInMainWorld("path", {
     parse: (filePath) => path.parse(filePath),
+    normalize: (filePath) => path.normalize(filePath), // Ensure cross-platform path compatibility
 });

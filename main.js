@@ -11,7 +11,7 @@ function createWindow() {
     mainWindow = new BrowserWindow({
         width: 900,
         height: 700,
-        titleBarStyle: "hiddenInset",
+        titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
         webPreferences: {
             nodeIntegration: true,
             contextIsolation: true,

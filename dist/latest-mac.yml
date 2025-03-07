@@ -1,0 +1,8 @@
+version: 1.0.0
+files:
+  - url: TextEditor-1.0.0-arm64.dmg
+    sha512: QpzzrzvyD4C2ffh0CxjEmL9PK9feZgSzS2xpcSIRlUW34N0UsE1kXG5thEBGnltwOwI71d+G4Z4J5ABeYYfhsQ==
+    size: 105328569
+path: TextEditor-1.0.0-arm64.dmg
+sha512: QpzzrzvyD4C2ffh0CxjEmL9PK9feZgSzS2xpcSIRlUW34N0UsE1kXG5thEBGnltwOwI71d+G4Z4J5ABeYYfhsQ==
+releaseDate: '2025-03-07T16:44:27.585Z'
