@@ -39,6 +39,9 @@
     "productName": "TextEditor",
     "copyright": "Copyright © 2025",
     "files": [
+
+      "!release-builds",
+      "!test.*",      
       "main.js",
       "preload.js",
       "renderer.js",

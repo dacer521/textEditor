@@ -6,6 +6,8 @@ productName: TextEditor
 copyright: Copyright © 2025
 files:
   - filter:
+      - '!release-builds'
+      - '!test.*'
       - main.js
       - preload.js
       - renderer.js
