@@ -1,0 +1,35 @@
+{
+  "name": "texteditor",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "start": "NODE_ENV=development electron .",
+    "build": "electron-builder",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "dacer521",
+  "license": "ISC",
+  "description": "simple text editor",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dacer521/textEditor.git"
+  },
+  "keywords": [
+    "text-editor"
+  ],
+  "bugs": {
+    "url": "https://github.com/dacer521/textEditor/issues"
+  },
+  "homepage": "https://github.com/dacer521/textEditor#readme",
+  "dependencies": {
+    "app": "^0.1.0",
+    "console": "^0.7.2",
+    "el": "^0.2.3",
+    "ipc": "^0.0.1",
+    "minimist": "^1.2.8"
+  },
+  "devDependencies": {
+    "electron-builder": "^25.1.8",
+    "electron-reloader": "^1.2.3"
+  }
+}
