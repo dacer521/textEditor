@@ -33,29 +33,29 @@
     "electron-builder": "^25.1.8",
     "electron-reloader": "^1.2.3"
   },
-  "build": {
-    "appId": "com.texteditor.app",
-    "productName": "Dragon Editor",
-    "copyright": "Copyright © 2025",
-    "files": [
-      "!release-builds",
-      "!test.*",
-      "main.js",
-      "preload.js",
-      "renderer.js",
-      "index.html",
-      "styles.css",
-      "node_modules",
-      "package.json"
-    ],
-    "win": {
-      "target": "nsis",
-      "icon": "images/babyDragon.ico"
-    },
-    "mac": {
-      "target": "dmg",
-      "icon": "images/babyDragon.icns"
-    }
+ "build": {
+  "appId": "com.texteditor.app",
+  "productName": "Dragon Editor",
+  "files": [
+    "main.js",
+    "preload.js",
+    "renderer.js",
+    "index.html",
+    "styles.css",
+    "package.json"
+  ],
+  "directories": {
+    "output": "release-builds"
+  },
+  "win": {
+    "target": "nsis",
+    "icon": "images/babyDragon(1).ico"
+  },
+  "mac": {
+    "target": "dmg",
+    "icon": "images/babyDragon.icns"
+  }
+
   },
   "dependencies": {
     "fs": "^0.0.1-security",
