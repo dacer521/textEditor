@@ -1,8 +1,8 @@
-const { app, BrowserWindow, ipcMain, dialog, Notification, Menu } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, Notification, Menu, nativeImage } = require("electron");
 const path = require("path");
 const fs = require("fs");
 
-const isMac = process.platform === "darwin"; // macOS check
+const isMac = process.platform === "darwin";
 
 let mainWindow;
 let openedFilePath;
@@ -36,13 +36,13 @@ function createWindow() {
                 label: "Open Recent",
                 role: "recentdocuments",
                 submenu: [
-                  {
-                    label: "Clear Recent",
-                    role: "clearrecentdocuments",
-                  },
+                    {
+                        label: "Clear Recent",
+                        role: "clearrecentdocuments",
+                    },
                 ],
-              },
-            isMac ? { role: "close" } : { role: "quit" }, // Use 'close' on macOS, 'quit' otherwise
+            },
+            isMac ? { role: "close" } : { role: "quit" },
         ],
     };
 
@@ -65,14 +65,31 @@ function createWindow() {
     const menu = Menu.buildFromTemplate([fileMenu, editMenu]);
     Menu.setApplicationMenu(menu);
 }
+
+app.whenReady().then(() => {
+    createWindow();
+
+    if (isMac) {
+        const iconPath = path.resolve(__dirname, "images", "babyDragon.icns");
+        if (fs.existsSync(iconPath)) {
+            const appIcon = nativeImage.createFromPath(iconPath);
+            if (!appIcon.isEmpty()) {
+                app.dock.setIcon(appIcon);
+            } else {
+                console.error("Failed to load icon: Image is empty");
+            }
+        } else {
+            console.error("Icon file not found:", iconPath);
+        }
+    }
+});
+
 const handleError = () => {
     new Notification({
         title: "Error text",
         body: "Something went wrong",
     }).show();
 };
-
-app.whenReady().then(createWindow);
 
 const openFile = (filePath) => {
     fs.readFile(filePath, "utf-8", (error, content) => {
@@ -86,13 +103,11 @@ const openFile = (filePath) => {
         openedFilePath = filePath;
         mainWindow.webContents.send("document-opened", { filePath, content });
     });
-}
-
+};
 
 app.on("open-file", (_, filePath) => {
     openFile(filePath);
 });
-
 
 app.on("window-all-closed", () => {
     if (!isMac) {
@@ -126,7 +141,7 @@ ipcMain.on("create-document", (event) => {
                 mainWindow.webContents.send("document-created", filePath);
             });
         })
-        .catch((err) => {
+        .catch(() => {
             handleError();
         });
 });
@@ -145,8 +160,6 @@ ipcMain.on("openDocumentTriggered", () => {
 
             const filePath = filePaths[0];
             openedFilePath = filePath;
-
-            console.log("File path:", filePath);
 
             openFile(filePath);
         })

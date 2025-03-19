@@ -28,20 +28,18 @@
     "build:mac": "electron-builder --mac",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "electron-builder": "^25.1.8",
-    "electron-reloader": "^1.2.3",
-    "cross-env": "^7.0.3"
+    "electron-reloader": "^1.2.3"
   },
   "build": {
     "appId": "com.texteditor.app",
-    "productName": "TextEditor",
+    "productName": "Dragon Editor",
     "copyright": "Copyright © 2025",
     "files": [
-
       "!release-builds",
-      "!test.*",      
+      "!test.*",
       "main.js",
       "preload.js",
       "renderer.js",
@@ -52,11 +50,15 @@
     ],
     "win": {
       "target": "nsis",
-      "icon": "assets/icon.ico"
+      "icon": "images/babyDragon.ico"
     },
     "mac": {
       "target": "dmg",
-      "icon": "assets/icon.icns"
+      "icon": "images/babyDragon.icns"
     }
+  },
+  "dependencies": {
+    "fs": "^0.0.1-security",
+    "path": "^0.12.7"
   }
 }
