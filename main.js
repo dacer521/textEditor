@@ -2,6 +2,11 @@ const { app, BrowserWindow, ipcMain, dialog, Notification, Menu, nativeImage } =
 const path = require("path");
 const fs = require("fs");
 
+// Log uncaught exceptions to help with debugging
+process.on('uncaughtException', (error) => {
+  console.error('Uncaught Exception:', error);
+});
+
 const isMac = process.platform === "darwin";
 
 let mainWindow;
@@ -26,11 +31,15 @@ function createWindow() {
         submenu: [
             {
                 label: "Add New File",
-                click: () => ipcMain.emit("openDocumentTriggered"),
+                click: () => {
+                    if (mainWindow) mainWindow.webContents.send("openDocumentTriggered");
+                },
             },
             {
                 label: "Create New File",
-                click: () => ipcMain.emit("create-document"),
+                click: () => {
+                    if (mainWindow) mainWindow.webContents.send("create-document");
+                },
             },
             {
                 label: "Open Recent",
@@ -70,7 +79,7 @@ app.whenReady().then(() => {
     createWindow();
 
     if (isMac) {
-        const iconPath = path.resolve(__dirname, "images", "babyDragon.icns");
+        const iconPath = path.join(__dirname, "images", "babyDragon.icns");
         if (fs.existsSync(iconPath)) {
             const appIcon = nativeImage.createFromPath(iconPath);
             if (!appIcon.isEmpty()) {
