@@ -50,7 +50,7 @@
     },
     "win": {
       "target": "nsis",
-      "icon": "build/icons/icon.ico"
+      "icon": "build/icons/babyDragon.ico"
     },
     "mac": {
       "target": "dmg",
