@@ -1,60 +1,61 @@
 {
-    "name": "texteditor",
-    "version": "1.0.0",
-    "description": "Simple text editor",
-    "main": "main.js",
-    "author": "dacer521",
-    "license": "ISC",
-    "repository": {
-      "type": "git",
-      "url": "git+https://github.com/dacer521/textEditor.git"
-    },
-    "keywords": [
-      "text-editor",
-      "electron",
-      "windows",
-      "macOS",
-      "cross-platform"
-    ],
-    "bugs": {
-      "url": "https://github.com/dacer521/textEditor/issues"
-    },
-    "homepage": "https://github.com/dacer521/textEditor#readme",
-    "scripts": {
-      "start": "electron .",
-      "dev": "cross-env NODE_ENV=development electron .",
-      "build": "electron-builder",
-      "build:win": "electron-builder --win",
-      "build:mac": "electron-builder --mac",
-      "test": "echo \"Error: no test specified\" && exit 1"
-    },
-    "devDependencies": {
-      "cross-env": "^7.0.3",
-      "electron-builder": "^25.1.8",
-      "electron-reloader": "^1.2.3"
-    },
-   "build": {
-    "appId": "com.texteditor.app",
-    "productName": "Dragon Editor",
-    "files": [
-      "main.js",
-      "preload.js",
-      "renderer.js",
-      "index.html",
-      "styles.css",
-      "package.json"
-    ],
-    "directories": {
-      "output": "release-builds",
-      "buildResources": "build"
-    },
-    "win": {
-      "target": "nsis",
-      "icon": "build/icons/babyDragon.ico"
-    },
-    "mac": {
-      "target": "dmg",
-      "icon": "build/icons/icon.icns"
-    }
-    }
+  "name": "texteditor",
+  "version": "1.0.0",
+  "description": "Simple text editor",
+  "main": "main.js",
+  "author": "dacer521",
+  "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dacer521/textEditor.git"
+  },
+  "keywords": [
+    "text-editor",
+    "electron",
+    "windows",
+    "macOS",
+    "cross-platform"
+  ],
+  "bugs": {
+    "url": "https://github.com/dacer521/textEditor/issues"
+  },
+  "homepage": "https://github.com/dacer521/textEditor#readme",
+  "scripts": {
+    "start": "electron .",
+    "dev": "cross-env NODE_ENV=development electron .",
+    "build": "electron-builder",
+    "build:win": "electron-builder --win",
+    "build:mac": "electron-builder --mac --universal",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "cross-env": "^7.0.3",
+    "electron-builder": "^25.1.8",
+    "electron-reloader": "^1.2.3"
+  },
+ "build": {
+  "appId": "com.texteditor.app",
+  "productName": "Dragon Editor",
+  "files": [
+    "main.js",
+    "preload.js",
+    "renderer.js",
+    "index.html",
+    "styles.css",
+    "package.json"
+  ],
+  "directories": {
+    "output": "release-builds",
+    "buildResources": "build"
+  },
+  "win": {
+    "target": "nsis",
+    "icon": "build/icons/babyDragon.ico"
+  },
+  "mac": {
+    "target": ["dmg", "zip"],
+    "icon": "build/icons/babyDragon.icns",
+    "type": "distribution"
   }
+ }
+}
