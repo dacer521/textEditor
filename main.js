@@ -14,8 +14,8 @@ let openedFilePath;
 
 function createWindow() {
     mainWindow = new BrowserWindow({
-        width: 900,
-        height: 700,
+        width: 1000,
+        height: 800,
         titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
         webPreferences: {
             nodeIntegration: true,
@@ -26,19 +26,26 @@ function createWindow() {
 
     mainWindow.loadFile("index.html");
 
+    // For development purposes
+    if (process.env.NODE_ENV === 'development') {
+        mainWindow.webContents.openDevTools();
+    }
+
     const fileMenu = {
         label: "File",
         submenu: [
             {
-                label: "Add New File",
+                label: "New File",
+                accelerator: "CmdOrCtrl+N",
                 click: () => {
-                    if (mainWindow) mainWindow.webContents.send("openDocumentTriggered");
+                    if (mainWindow) mainWindow.webContents.send("create-document");
                 },
             },
             {
-                label: "Create New File",
+                label: "Open File",
+                accelerator: "CmdOrCtrl+O",
                 click: () => {
-                    if (mainWindow) mainWindow.webContents.send("create-document");
+                    if (mainWindow) mainWindow.webContents.send("openDocumentTriggered");
                 },
             },
             {
@@ -51,6 +58,7 @@ function createWindow() {
                     },
                 ],
             },
+            { type: "separator" },
             isMac ? { role: "close" } : { role: "quit" },
         ],
     };
@@ -68,10 +76,33 @@ function createWindow() {
             { role: "delete" },
             { role: "selectAll" },
             { type: "separator" },
+            {
+                label: "Find",
+                accelerator: "CmdOrCtrl+F",
+                click: () => {
+                    // Implement find functionality if needed
+                }
+            }
         ],
     };
 
-    const menu = Menu.buildFromTemplate([fileMenu, editMenu]);
+    const viewMenu = {
+        label: "View",
+        submenu: [
+            { role: "reload" },
+            { role: "forceReload" },
+            { type: "separator" },
+            { role: "toggleDevTools" },
+            { type: "separator" },
+            { role: "resetZoom" },
+            { role: "zoomIn" },
+            { role: "zoomOut" },
+            { type: "separator" },
+            { role: "togglefullscreen" }
+        ]
+    };
+
+    const menu = Menu.buildFromTemplate([fileMenu, editMenu, viewMenu]);
     Menu.setApplicationMenu(menu);
 }
 
@@ -93,10 +124,10 @@ app.whenReady().then(() => {
     }
 });
 
-const handleError = () => {
+const handleError = (message = "Something went wrong") => {
     new Notification({
-        title: "Error text",
-        body: "Something went wrong",
+        title: "Error",
+        body: message,
     }).show();
 };
 
@@ -104,7 +135,7 @@ const openFile = (filePath) => {
     fs.readFile(filePath, "utf-8", (error, content) => {
         if (error) {
             console.error("Error reading file:", error);
-            handleError();
+            handleError("Error reading file");
             return;
         }
 
@@ -137,21 +168,22 @@ ipcMain.on("create-document", (event) => {
         })
         .then(({ filePath }) => {
             if (!filePath) {
-                handleError();
+                // User canceled the operation
                 return;
             }
 
             fs.writeFile(filePath, "", (error) => {
                 if (error) {
-                    handleError();
+                    handleError("Error creating file");
                     return;
                 }
                 openedFilePath = filePath;
                 mainWindow.webContents.send("document-created", filePath);
             });
         })
-        .catch(() => {
-            handleError();
+        .catch((error) => {
+            console.error("Dialog error:", error);
+            handleError("Error creating document");
         });
 });
 
@@ -174,18 +206,19 @@ ipcMain.on("openDocumentTriggered", () => {
         })
         .catch((error) => {
             console.error("Dialog error:", error);
+            handleError("Error opening file");
         });
 });
 
-ipcMain.on("file-content-updated", (_, textAreaContent) => {
+ipcMain.on("file-content-updated", (_, textContent) => {
     if (!openedFilePath) {
         console.error("No file is currently opened or created. Cannot save.");
         return;
     }
 
-    fs.writeFile(openedFilePath, textAreaContent, (error) => {
+    fs.writeFile(openedFilePath, textContent, (error) => {
         if (error) {
-            handleError();
+            handleError("Error saving file");
         }
     });
 });

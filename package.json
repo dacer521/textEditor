@@ -33,29 +33,36 @@
     "electron-builder": "^25.1.8",
     "electron-reloader": "^1.2.3"
   },
- "build": {
-  "appId": "com.texteditor.app",
-  "productName": "Dragon Editor",
-  "files": [
-    "main.js",
-    "preload.js",
-    "renderer.js",
-    "index.html",
-    "styles.css",
-    "package.json"
-  ],
-  "directories": {
-    "output": "release-builds",
-    "buildResources": "build"
+  "build": {
+    "appId": "com.texteditor.app",
+    "productName": "Dragon Editor",
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer.js",
+      "index.html",
+      "styles.css",
+      "package.json"
+    ],
+    "directories": {
+      "output": "release-builds",
+      "buildResources": "build"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "build/icons/babyDragon.ico"
+    },
+    "mac": {
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "icon": "build/icons/babyDragon.icns",
+      "type": "distribution"
+    }
   },
-  "win": {
-    "target": "nsis",
-    "icon": "build/icons/babyDragon.ico"
-  },
-  "mac": {
-    "target": ["dmg", "zip"],
-    "icon": "build/icons/babyDragon.icns",
-    "type": "distribution"
+  "dependencies": {
+    "electron": "^35.1.4",
+    "quill": "^2.0.3"
   }
- }
 }
