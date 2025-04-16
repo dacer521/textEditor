@@ -1,6 +1,10 @@
 const { app, BrowserWindow, ipcMain, dialog, Notification, Menu, nativeImage } = require("electron");
 const path = require("path");
 const fs = require("fs");
+const { renderAsync } = require('docx-preview');
+const { Document, Packer, Paragraph, TextRun } = require("docx");
+const htmlToDocx = require("html-to-docx");
+const docx2html = require("docx2html");
 
 // Log uncaught exceptions to help with debugging
 process.on('uncaughtException', (error) => {
@@ -131,18 +135,71 @@ const handleError = (message = "Something went wrong") => {
     }).show();
 };
 
-const openFile = (filePath) => {
-    fs.readFile(filePath, "utf-8", (error, content) => {
-        if (error) {
-            console.error("Error reading file:", error);
-            handleError("Error reading file");
-            return;
-        }
+function readDocx(filePath) {
+    return fs.promises.readFile(filePath);
+}
 
-        app.addRecentDocument(filePath);
-        openedFilePath = filePath;
-        mainWindow.webContents.send("document-opened", { filePath, content });
+
+function saveDocx(htmlContent, filePath) {
+    // Wrap the HTML in a complete document structure
+    const wrappedHtml = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <title>Document</title>
+      <style>
+        /* Optional: include any inline styles if needed */
+        body {
+          font-family: Arial, sans-serif;
+          font-size: 16px;
+        }
+      </style>
+    </head>
+    <body>
+      ${htmlContent}
+    </body>
+    </html>
+    `;
+    
+    return htmlToDocx(wrappedHtml, null, {
+        table: { row: { cantSplit: true } },
+        footer: true,
+        pageNumber: true,
+    }).then(buffer => {
+        console.log("DOCX conversion successful, writing file...");
+        return fs.promises.writeFile(filePath, buffer);
+    }).catch(error => {
+        console.error("Error converting HTML to DOCX:", error);
+        throw error;
     });
+}
+
+
+const openFile = (filePath) => {
+    const ext = path.extname(filePath).toLowerCase();
+    app.addRecentDocument(filePath);
+    openedFilePath = filePath;
+
+    if (ext === ".docx") {
+        readDocx(filePath)
+            .then(buffer => {
+                mainWindow.webContents.send("document-opened", { filePath, buffer: buffer.toString("base64") });
+            })
+            .catch(err => {
+                console.error("Error reading .docx:", err);
+                handleError("Error reading .docx file");
+            });
+    } else {
+        fs.readFile(filePath, "utf-8", (error, content) => {
+            if (error) {
+                console.error("Error reading file:", error);
+                handleError("Error reading file");
+                return;
+            }
+            mainWindow.webContents.send("document-opened", { filePath, content });
+        });
+    }
 };
 
 app.on("open-file", (_, filePath) => {
@@ -164,7 +221,7 @@ app.on("activate", () => {
 ipcMain.on("create-document", (event) => {
     dialog
         .showSaveDialog(mainWindow, {
-            filters: [{ name: "text files", extensions: ["txt"] }],
+            filters: [{ name: "Text or Word Documents", extensions: ["docx", "txt"] }],
         })
         .then(({ filePath }) => {
             if (!filePath) {
@@ -191,7 +248,7 @@ ipcMain.on("openDocumentTriggered", () => {
     dialog
         .showOpenDialog({
             properties: ["openFile"],
-            filters: [{ name: "text files", extensions: ["txt"] }],
+            filters: [{ name: "Text or Word Documents", extensions: ["docx", "txt"] }],
         })
         .then(({ filePaths }) => {
             if (!filePaths || filePaths.length === 0) {
@@ -216,9 +273,16 @@ ipcMain.on("file-content-updated", (_, textContent) => {
         return;
     }
 
-    fs.writeFile(openedFilePath, textContent, (error) => {
-        if (error) {
-            handleError("Error saving file");
-        }
-    });
+    const ext = path.extname(openedFilePath).toLowerCase();
+    if (ext === ".docx") {
+        saveDocx(textContent, openedFilePath)
+          .catch(() => handleError("Error saving .docx file"));
+    } else {
+        fs.writeFile(openedFilePath, textContent, (error) => {
+            if (error) {
+                handleError("Error saving file");
+            }
+        });
+    }
 });
+

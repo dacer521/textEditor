@@ -62,7 +62,11 @@
     }
   },
   "dependencies": {
-    "electron": "^35.1.4",
+    "electron": "^35.1.5",
+    "fs": "^0.0.1-security",
+    "html-to-docx": "^1.8.0",
+    "mammoth": "^1.9.0",
+    "path": "^0.12.7",
     "quill": "^2.0.3"
   }
 }
