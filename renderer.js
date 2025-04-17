@@ -33,16 +33,16 @@ window.addEventListener("DOMContentLoaded", () => {
                 byteArray[i] = binaryString.charCodeAt(i);
             }
             const arrayBuffer = byteArray.buffer;
+
+            window.docxPreview.renderAsync(arrayBuffer).then(renderedHtml => {
+        quill.root.innerHTML = "";
+        quill.clipboard.dangerouslyPasteHTML(renderedHtml);
+        quill.enable();
+        quill.focus();
         
-            // Render with docx-preview
-            const container = quill.root;
-            container.innerHTML = ""; // Clear previous content
-        
-            window.docxPreview.renderAsync(arrayBuffer, container).then(() => {
-                quill.enable();
-            }).catch((err) => {
-                console.error("docx-preview error:", err);
-            });
+    }).catch(err => {
+        console.error("Error rendering DOCX with docx-preview:", err);
+    });
         } else {
             quill.root.innerHTML = contentOrBuffer;
             quill.focus();

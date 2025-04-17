@@ -24,8 +24,20 @@ contextBridge.exposeInMainWorld("path", {
   parse: (filePath) => path.parse(filePath),
   normalize: (filePath) => path.normalize(filePath),
 });
+
+
+
 contextBridge.exposeInMainWorld("docxPreview", {
-  renderAsync: (arrayBuffer, container) => {
-    return renderAsync(arrayBuffer, container);
+  renderAsync: async (arrayBuffer) => {
+    return renderAsync(arrayBuffer, undefined, {
+      inWrapper: false,
+      ignoreWidth: true,
+      ignoreHeight: true,
+      ignoreFonts: false,
+      useBase64URL: false,
+      breakPages: false,
+      experimental: false,
+      trimXmlDeclaration: true,
+    });
   }
 });
