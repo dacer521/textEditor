@@ -26,31 +26,22 @@ window.addEventListener("DOMContentLoaded", () => {
         const ext = window.path.parse(filePath).ext.toLowerCase();
     
         if (ext === ".docx") {
-            // Convert the base64-encoded content to a binary buffer
             const binaryString = atob(contentOrBuffer);
             const length = binaryString.length;
             const byteArray = new Uint8Array(length);
             for (let i = 0; i < length; i++) {
                 byteArray[i] = binaryString.charCodeAt(i);
             }
-            // Mammoth requires an ArrayBuffer
             const arrayBuffer = byteArray.buffer;
-    
-            // Use Mammoth.js with a custom style map.
-            // Adjust the style map to better fit your DOCX formatting.
-            mammoth.convertToHtml({ arrayBuffer: arrayBuffer }, {
-                styleMap: [
-                    "p[style-name='Normal'] => p:fresh",
-                    "p[style-name='Heading 1'] => h1:fresh",
-                    "p[style-name='Heading 2'] => h2:fresh",
-                    // Add additional mappings as needed.
-                ]
-            }).then(function(result) {
-                console.log("Mammoth conversion output:", result.value);
-                quill.root.innerHTML = result.value;
-                quill.focus();
-            }).catch(function(err) {
-                console.error("Mammoth conversion error:", err);
+        
+            // Render with docx-preview
+            const container = quill.root;
+            container.innerHTML = ""; // Clear previous content
+        
+            window.docxPreview.renderAsync(arrayBuffer, container).then(() => {
+                quill.enable();
+            }).catch((err) => {
+                console.error("docx-preview error:", err);
             });
         } else {
             quill.root.innerHTML = contentOrBuffer;

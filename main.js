@@ -1,15 +1,8 @@
 const { app, BrowserWindow, ipcMain, dialog, Notification, Menu, nativeImage } = require("electron");
 const path = require("path");
 const fs = require("fs");
-const { renderAsync } = require('docx-preview');
-const { Document, Packer, Paragraph, TextRun } = require("docx");
+const sanitizeHtml = require("sanitize-html");
 const htmlToDocx = require("html-to-docx");
-const docx2html = require("docx2html");
-
-// Log uncaught exceptions to help with debugging
-process.on('uncaughtException', (error) => {
-  console.error('Uncaught Exception:', error);
-});
 
 const isMac = process.platform === "darwin";
 
@@ -30,7 +23,6 @@ function createWindow() {
 
     mainWindow.loadFile("index.html");
 
-    // For development purposes
     if (process.env.NODE_ENV === 'development') {
         mainWindow.webContents.openDevTools();
     }
@@ -41,26 +33,17 @@ function createWindow() {
             {
                 label: "New File",
                 accelerator: "CmdOrCtrl+N",
-                click: () => {
-                    if (mainWindow) mainWindow.webContents.send("create-document");
-                },
+                click: () => mainWindow?.webContents.send("create-document"),
             },
             {
                 label: "Open File",
                 accelerator: "CmdOrCtrl+O",
-                click: () => {
-                    if (mainWindow) mainWindow.webContents.send("openDocumentTriggered");
-                },
+                click: () => mainWindow?.webContents.send("openDocumentTriggered"),
             },
             {
                 label: "Open Recent",
                 role: "recentdocuments",
-                submenu: [
-                    {
-                        label: "Clear Recent",
-                        role: "clearrecentdocuments",
-                    },
-                ],
+                submenu: [{ label: "Clear Recent", role: "clearrecentdocuments" }],
             },
             { type: "separator" },
             isMac ? { role: "close" } : { role: "quit" },
@@ -70,22 +53,14 @@ function createWindow() {
     const editMenu = {
         label: "Edit",
         submenu: [
-            { role: "undo" },
-            { role: "redo" },
-            { type: "separator" },
-            { role: "cut" },
-            { role: "copy" },
-            { role: "paste" },
-            { role: "pasteAndMatchStyle" },
-            { role: "delete" },
-            { role: "selectAll" },
+            { role: "undo" }, { role: "redo" }, { type: "separator" },
+            { role: "cut" }, { role: "copy" }, { role: "paste" },
+            { role: "pasteAndMatchStyle" }, { role: "delete" }, { role: "selectAll" },
             { type: "separator" },
             {
                 label: "Find",
                 accelerator: "CmdOrCtrl+F",
-                click: () => {
-                    // Implement find functionality if needed
-                }
+                click: () => { /* optional */ }
             }
         ],
     };
@@ -93,15 +68,9 @@ function createWindow() {
     const viewMenu = {
         label: "View",
         submenu: [
-            { role: "reload" },
-            { role: "forceReload" },
-            { type: "separator" },
-            { role: "toggleDevTools" },
-            { type: "separator" },
-            { role: "resetZoom" },
-            { role: "zoomIn" },
-            { role: "zoomOut" },
-            { type: "separator" },
+            { role: "reload" }, { role: "forceReload" }, { type: "separator" },
+            { role: "toggleDevTools" }, { type: "separator" },
+            { role: "resetZoom" }, { role: "zoomIn" }, { role: "zoomOut" }, { type: "separator" },
             { role: "togglefullscreen" }
         ]
     };
@@ -117,31 +86,28 @@ app.whenReady().then(() => {
         const iconPath = path.join(__dirname, "images", "babyDragon.icns");
         if (fs.existsSync(iconPath)) {
             const appIcon = nativeImage.createFromPath(iconPath);
-            if (!appIcon.isEmpty()) {
-                app.dock.setIcon(appIcon);
-            } else {
-                console.error("Failed to load icon: Image is empty");
-            }
-        } else {
-            console.error("Icon file not found:", iconPath);
+            if (!appIcon.isEmpty()) app.dock.setIcon(appIcon);
         }
     }
 });
 
 const handleError = (message = "Something went wrong") => {
-    new Notification({
-        title: "Error",
-        body: message,
-    }).show();
+    new Notification({ title: "Error", body: message }).show();
 };
 
 function readDocx(filePath) {
     return fs.promises.readFile(filePath);
 }
 
-
 function saveDocx(htmlContent, filePath) {
-    // Wrap the HTML in a complete document structure
+    const cleanHtml = sanitizeHtml(htmlContent, {
+        allowedTags: sanitizeHtml.defaults.allowedTags.concat(["img", "h1", "h2", "u"]),
+        allowedAttributes: {
+            '*': ['style', 'class'],
+            'img': ['src', 'width', 'height'],
+        },
+    });
+
     const wrappedHtml = `
     <!DOCTYPE html>
     <html>
@@ -149,7 +115,6 @@ function saveDocx(htmlContent, filePath) {
       <meta charset="utf-8">
       <title>Document</title>
       <style>
-        /* Optional: include any inline styles if needed */
         body {
           font-family: Arial, sans-serif;
           font-size: 16px;
@@ -157,17 +122,16 @@ function saveDocx(htmlContent, filePath) {
       </style>
     </head>
     <body>
-      ${htmlContent}
+      ${cleanHtml}
     </body>
     </html>
     `;
-    
+
     return htmlToDocx(wrappedHtml, null, {
         table: { row: { cantSplit: true } },
         footer: true,
         pageNumber: true,
     }).then(buffer => {
-        console.log("DOCX conversion successful, writing file...");
         return fs.promises.writeFile(filePath, buffer);
     }).catch(error => {
         console.error("Error converting HTML to DOCX:", error);
@@ -175,8 +139,7 @@ function saveDocx(htmlContent, filePath) {
     });
 }
 
-
-const openFile = (filePath) => {
+function openFile(filePath) {
     const ext = path.extname(filePath).toLowerCase();
     app.addRecentDocument(filePath);
     openedFilePath = filePath;
@@ -184,7 +147,10 @@ const openFile = (filePath) => {
     if (ext === ".docx") {
         readDocx(filePath)
             .then(buffer => {
-                mainWindow.webContents.send("document-opened", { filePath, buffer: buffer.toString("base64") });
+                mainWindow.webContents.send("document-opened", {
+                    filePath,
+                    buffer: buffer.toString("base64")
+                });
             })
             .catch(err => {
                 console.error("Error reading .docx:", err);
@@ -200,71 +166,50 @@ const openFile = (filePath) => {
             mainWindow.webContents.send("document-opened", { filePath, content });
         });
     }
-};
+}
 
-app.on("open-file", (_, filePath) => {
-    openFile(filePath);
-});
+app.on("open-file", (_, filePath) => openFile(filePath));
 
 app.on("window-all-closed", () => {
-    if (!isMac) {
-        app.quit();
-    }
+    if (!isMac) app.quit();
 });
 
 app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-        createWindow();
-    }
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
 });
 
-ipcMain.on("create-document", (event) => {
-    dialog
-        .showSaveDialog(mainWindow, {
-            filters: [{ name: "Text or Word Documents", extensions: ["docx", "txt"] }],
-        })
-        .then(({ filePath }) => {
-            if (!filePath) {
-                // User canceled the operation
+ipcMain.on("create-document", () => {
+    dialog.showSaveDialog(mainWindow, {
+        filters: [{ name: "Text or Word Documents", extensions: ["docx", "txt"] }],
+    }).then(({ filePath }) => {
+        if (!filePath) return;
+
+        fs.writeFile(filePath, "", (error) => {
+            if (error) {
+                handleError("Error creating file");
                 return;
             }
-
-            fs.writeFile(filePath, "", (error) => {
-                if (error) {
-                    handleError("Error creating file");
-                    return;
-                }
-                openedFilePath = filePath;
-                mainWindow.webContents.send("document-created", filePath);
-            });
-        })
-        .catch((error) => {
-            console.error("Dialog error:", error);
-            handleError("Error creating document");
+            openedFilePath = filePath;
+            mainWindow.webContents.send("document-created", filePath);
         });
+    }).catch(error => {
+        console.error("Dialog error:", error);
+        handleError("Error creating document");
+    });
 });
 
 ipcMain.on("openDocumentTriggered", () => {
-    dialog
-        .showOpenDialog({
-            properties: ["openFile"],
-            filters: [{ name: "Text or Word Documents", extensions: ["docx", "txt"] }],
-        })
-        .then(({ filePaths }) => {
-            if (!filePaths || filePaths.length === 0) {
-                console.error("No file selected.");
-                return;
-            }
-
-            const filePath = filePaths[0];
-            openedFilePath = filePath;
-
-            openFile(filePath);
-        })
-        .catch((error) => {
-            console.error("Dialog error:", error);
-            handleError("Error opening file");
-        });
+    dialog.showOpenDialog({
+        properties: ["openFile"],
+        filters: [{ name: "Text or Word Documents", extensions: ["docx", "txt"] }],
+    }).then(({ filePaths }) => {
+        if (!filePaths?.length) return;
+        openedFilePath = filePaths[0];
+        openFile(openedFilePath);
+    }).catch(error => {
+        console.error("Dialog error:", error);
+        handleError("Error opening file");
+    });
 });
 
 ipcMain.on("file-content-updated", (_, textContent) => {
@@ -276,13 +221,10 @@ ipcMain.on("file-content-updated", (_, textContent) => {
     const ext = path.extname(openedFilePath).toLowerCase();
     if (ext === ".docx") {
         saveDocx(textContent, openedFilePath)
-          .catch(() => handleError("Error saving .docx file"));
+            .catch(() => handleError("Error saving .docx file"));
     } else {
         fs.writeFile(openedFilePath, textContent, (error) => {
-            if (error) {
-                handleError("Error saving file");
-            }
+            if (error) handleError("Error saving file");
         });
     }
 });
-
