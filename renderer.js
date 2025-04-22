@@ -26,23 +26,23 @@ window.addEventListener("DOMContentLoaded", () => {
         const ext = window.path.parse(filePath).ext.toLowerCase();
     
         if (ext === ".docx") {
-            const binaryString = atob(contentOrBuffer);
-            const length = binaryString.length;
-            const byteArray = new Uint8Array(length);
-            for (let i = 0; i < length; i++) {
-                byteArray[i] = binaryString.charCodeAt(i);
-            }
-            const arrayBuffer = byteArray.buffer;
-
-            window.docxPreview.renderAsync(arrayBuffer).then(renderedHtml => {
-        quill.root.innerHTML = "";
-        quill.clipboard.dangerouslyPasteHTML(renderedHtml);
-        quill.enable();
-        quill.focus();
+            const arrayBuffer = Uint8Array.from(atob(contentOrBuffer), c => c.charCodeAt(0)).buffer;
         
-    }).catch(err => {
-        console.error("Error rendering DOCX with docx-preview:", err);
-    });
+            const container = document.createElement("div");
+            container.style.display = "none";
+            document.body.appendChild(container);
+        
+            window.docxPreview.renderAsync(arrayBuffer, container).then(() => {
+                const html = container.innerHTML;
+                container.remove();
+        
+                quill.setContents([]);
+                quill.clipboard.dangerouslyPasteHTML(html);
+                quill.enable();
+                quill.focus();
+            }).catch(err => console.error("DOCX render error:", err));
+        
+            return;
         } else {
             quill.root.innerHTML = contentOrBuffer;
             quill.focus();

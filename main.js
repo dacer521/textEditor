@@ -101,11 +101,17 @@ function readDocx(filePath) {
 
 function saveDocx(htmlContent, filePath) {
     const cleanHtml = sanitizeHtml(htmlContent, {
-        allowedTags: sanitizeHtml.defaults.allowedTags.concat(["img", "h1", "h2", "u"]),
+        allowedTags: sanitizeHtml.defaults.allowedTags.concat(["img", "h1", "h2", "u", "span"]),
         allowedAttributes: {
             '*': ['style', 'class'],
-            'img': ['src', 'width', 'height'],
+            'img': ['src', 'width', 'height']
         },
+        allowedStyles: {
+            '*': {
+                color: [/^.*$/i],
+                'background-color': [/^.*$/i]
+            }
+        }
     });
 
     const wrappedHtml = `
