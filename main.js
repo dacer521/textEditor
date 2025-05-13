@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog, Notification, Menu, nativeImage } = require("electron");
+const { app, BrowserWindow, ipcMain, dialog, Notification, Menu } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const sanitizeHtml = require("sanitize-html");
@@ -16,7 +16,7 @@ function createWindow() {
         height: 800,
         titleBarStyle: process.platform === "darwin" ? "hiddenInset" : "default",
         webPreferences: {
-            nodeIntegration: true,
+            nodeIntegration: false,
             contextIsolation: true,
             preload: path.join(__dirname, "preload.js"),
         },
@@ -54,9 +54,18 @@ function createWindow() {
     ]);
 
     Menu.setApplicationMenu(menu);
+
+    mainWindow.on("closed", () => {
+        mainWindow = null;
+        openedFilePath = null;
+    });
 }
 
 app.whenReady().then(createWindow);
+
+app.on("before-quit", () => {
+    if (process.platform === "win32") app.exit(0);
+});
 
 const handleError = (message) => {
     new Notification({ title: "Error", body: message }).show();
@@ -101,8 +110,14 @@ function openFile(filePath) {
 }
 
 app.on("open-file", (_, filePath) => openFile(filePath));
-app.on("window-all-closed", () => { if (!isMac) app.quit(); });
-app.on("activate", () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
+
+app.on("window-all-closed", () => {
+    if (!isMac) app.quit();
+});
+
+app.on("activate", () => {
+    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+});
 
 ipcMain.on("create-document", () => {
     dialog.showSaveDialog(mainWindow, {
