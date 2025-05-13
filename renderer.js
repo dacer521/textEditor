@@ -1,11 +1,12 @@
 let quill;
 
 window.addEventListener("DOMContentLoaded", () => {
+    console.log("[Renderer] DOMContentLoaded fired");
+
     const createDocumentButton = document.getElementById("createDocument");
     const openDocumentButton = document.getElementById("openDocument");
     const documentName = document.getElementById("documentName");
-    
-    // Initialize Quill
+
     quill = new Quill('#editor', {
         modules: {
             syntax: true,
@@ -14,81 +15,59 @@ window.addEventListener("DOMContentLoaded", () => {
         placeholder: 'Please open or create a file to begin',
         theme: 'snow'
     });
-    
-    // Disable editor initially
+
     quill.disable();
-    
+
     function handleDocumentChange(filePath, contentOrBuffer = "") {
-        documentName.innerText = window.path.parse(filePath).base;
-        quill.enable();
-        quill.setText(""); // Clear old content
-    
-        const ext = window.path.parse(filePath).ext.toLowerCase();
-    
-        if (ext === ".docx") {
-            const arrayBuffer = Uint8Array.from(atob(contentOrBuffer), c => c.charCodeAt(0)).buffer;
-        
-            const container = document.createElement("div");
-            container.style.display = "none";
-            document.body.appendChild(container);
-        
-            window.docxPreview.renderAsync(arrayBuffer, container).then(() => {
-                const html = container.innerHTML;
-                container.remove();
-        
-                quill.setContents([]);
-                quill.clipboard.dangerouslyPasteHTML(html);
-                quill.enable();
-                quill.focus();
-            }).catch(err => console.error("DOCX render error:", err));
-        
-            return;
-        } else {
-            quill.root.innerHTML = contentOrBuffer;
-            quill.focus();
+        console.log("[Renderer] handleDocumentChange called", filePath);
+
+        let fileName = filePath;
+        if (window.path && typeof window.path.parse === "function") {
+            fileName = window.path.parse(filePath).base;
         }
+        documentName.innerText = fileName;
+        quill.enable();
+        quill.setText("");
+
+        quill.root.innerHTML = contentOrBuffer ?? "";
+        quill.focus();
     }
-    
-    // Make sure the rest of your event listeners remain the same:
+
     createDocumentButton.addEventListener("click", () => {
-        if (window.ipcRender) {
+        console.log("[Renderer] Create Document button clicked");
+        if (window.ipcRender && typeof window.ipcRender.send === "function") {
             window.ipcRender.send("create-document");
-        } else {
-            console.error("window.ipcRender is undefined");
         }
     });
 
     openDocumentButton.addEventListener("click", () => {
-        if (window.ipcRender) {
+        console.log("[Renderer] Open Document button clicked");
+        if (window.ipcRender && typeof window.ipcRender.send === "function") {
             window.ipcRender.send("openDocumentTriggered");
-        } else {
-            console.error("window.ipcRender is undefined");
         }
     });
 
-    if (window.ipcRender) {
+    if (window.ipcRender && typeof window.ipcRender.receive === "function") {
         window.ipcRender.receive("document-created", (filePath) => {
-            if (filePath && window.path) {
+            console.log("[Renderer] Received document-created:", filePath);
+            if (filePath) {
                 handleDocumentChange(filePath);
-            } else {
-                console.error("window.path is undefined or filePath is invalid.");
             }
         });
 
-        window.ipcRender.receive("document-opened", ({ filePath, content, buffer }) => {
-            handleDocumentChange(filePath, content || buffer);
+        window.ipcRender.receive("document-opened", ({ filePath, content }) => {
+            console.log("[Renderer] Received document-opened:", filePath);
+            handleDocumentChange(filePath, content ?? "");
         });
     }
 
-    // Monitor text changes and save content
     quill.on('text-change', () => {
-        if (window.ipcRender && documentName.innerText !== "no file selected") {
+        if (window.ipcRender && typeof window.ipcRender.send === "function" && documentName.innerText !== "no file selected") {
             const html = quill.root.innerHTML;
-            console.log("Saving HTML content:", html);
-            window.ipcRender.send("file-content-updated", html);    
-        } else {
-            console.error("No file is opened. Cannot save.");
+            console.log("[Renderer] Sending file-content-updated");
+            window.ipcRender.send("file-content-updated", html);
         }
     });
-    
+
+    console.log("[Renderer] Renderer setup complete");
 });

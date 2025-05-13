@@ -1,8 +1,7 @@
 // preload.js
 const { contextBridge, ipcRenderer } = require("electron");
 const path = require("path");
-const { renderAsync } = require("docx-preview");
-
+const Buffer = require('buffer').Buffer;
 
 // Expose only the necessary APIs
 contextBridge.exposeInMainWorld("ipcRender", {
@@ -25,19 +24,4 @@ contextBridge.exposeInMainWorld("path", {
   normalize: (filePath) => path.normalize(filePath),
 });
 
-
-
-contextBridge.exposeInMainWorld("docxPreview", {
-  renderAsync: async (arrayBuffer) => {
-    return renderAsync(arrayBuffer, undefined, {
-      inWrapper: false,
-      ignoreWidth: true,
-      ignoreHeight: true,
-      ignoreFonts: false,
-      useBase64URL: false,
-      breakPages: false,
-      experimental: false,
-      trimXmlDeclaration: true,
-    });
-  }
-});
+contextBridge.exposeInMainWorld("Buffer", require("buffer").Buffer);
