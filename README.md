@@ -1,5 +1,11 @@
 this is a simple text-editing program.
 
-the core functionality is driven through electron.js, with a node.js backend.
+The core functionality is through electron.js and docx editing is provided by mammoth.js
 
-it is currently only compadible with txt files on windows and mac, but I hope to upgrade it to RTF files in the near future.
+Styling is not functional, but tables images and text are functional in docx files.
+
+The program functions as a simple text editor, and can be ran by downloading the files and running:
+
+npm run build:mac
+or
+npm run build:win

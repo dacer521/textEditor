@@ -1,0 +1,23 @@
+directories:
+  output: release-builds
+  buildResources: build
+appId: com.texteditor.app
+productName: Dragon Editor
+files:
+  - filter:
+      - main.js
+      - preload.js
+      - renderer.js
+      - index.html
+      - styles.css
+      - package.json
+win:
+  target: nsis
+  icon: build/icons/babyDragon.ico
+mac:
+  target:
+    - dmg
+    - zip
+  icon: build/icons/babyDragon.icns
+  type: distribution
+electronVersion: 36.2.0
