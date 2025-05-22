@@ -1,27 +1,29 @@
-// preload.js
 const { contextBridge, ipcRenderer } = require("electron");
-const path = require("path");
-const Buffer = require('buffer').Buffer;
 
-// Expose only the necessary APIs
 contextBridge.exposeInMainWorld("ipcRender", {
   send: (channel, data) => {
-    let validChannels = ["create-document", "openDocumentTriggered", "file-content-updated"];
+    const validChannels = ["create-document", "openDocumentTriggered", "file-content-updated"];
     if (validChannels.includes(channel)) {
       ipcRenderer.send(channel, data);
     }
   },
   receive: (channel, func) => {
-    let validChannels = ["document-created", "document-opened"];
+    const validChannels = ["document-created", "document-opened"];
     if (validChannels.includes(channel)) {
       ipcRenderer.on(channel, (_, data) => func(data));
     }
   },
 });
 
+// manually mock minimal path.parse
 contextBridge.exposeInMainWorld("path", {
-  parse: (filePath) => path.parse(filePath),
-  normalize: (filePath) => path.normalize(filePath),
+  parse: (filePath) => {
+    const parts = filePath.split(/[\/\\]/);
+    const base = parts[parts.length - 1];
+    return { base };
+  },
+  normalize: (filePath) => filePath.replace(/\\/g, "/")
 });
 
+// this is safe
 contextBridge.exposeInMainWorld("Buffer", require("buffer").Buffer);

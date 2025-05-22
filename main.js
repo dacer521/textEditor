@@ -10,6 +10,8 @@ const isMac = process.platform === "darwin";
 let mainWindow;
 let openedFilePath;
 
+
+
 function createWindow() {
     mainWindow = new BrowserWindow({
         width: 1000,
@@ -18,10 +20,11 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
-            preload: path.join(__dirname, "preload.js"),
+            preload: path.join(__dirname, "preload.js")
         },
     });
-
+    
+    mainWindow.webContents.openDevTools({ mode: "detach" });
     mainWindow.loadFile("index.html");
 
     const menu = Menu.buildFromTemplate([
@@ -120,27 +123,33 @@ app.on("activate", () => {
 });
 
 ipcMain.on("create-document", () => {
-    dialog.showSaveDialog(mainWindow, {
-        filters: [{ name: "Text or Word Documents", extensions: ["docx", "txt"] }],
-    }).then(({ filePath }) => {
-        if (!filePath) return;
-        fs.writeFile(filePath, "", (error) => {
-            if (error) return handleError("Error creating file");
-            openedFilePath = filePath;
-            mainWindow.webContents.send("document-created", filePath);
-        });
+  dialog.showSaveDialog(mainWindow, {
+    filters: [{ name: "Text or Word Documents", extensions: ["docx", "txt"] }],
+  }).then(({ filePath }) => {
+    if (!filePath) return;
+    fs.writeFile(filePath, "", (error) => {
+      if (error) return handleError("Error creating file");
+      openedFilePath = filePath;
+      mainWindow.webContents.send("document-created", filePath);
     });
+  }).catch((err) => {
+    console.error("Failed to create file:", err);
+    handleError("Error creating file");
+  });
 });
 
 ipcMain.on("openDocumentTriggered", () => {
-    dialog.showOpenDialog({
-        properties: ["openFile"],
-        filters: [{ name: "Text or Word Documents", extensions: ["docx", "txt"] }],
-    }).then(({ filePaths }) => {
-        if (!filePaths?.length) return;
-        openedFilePath = filePaths[0];
-        openFile(openedFilePath);
-    });
+  dialog.showOpenDialog(mainWindow, {
+    properties: ["openFile"],
+    filters: [{ name: "Text or Word Documents", extensions: ["docx", "txt"] }],
+  }).then(({ filePaths }) => {
+    if (!filePaths?.length) return;
+    openedFilePath = filePaths[0];
+    openFile(openedFilePath);
+  }).catch((err) => {
+    console.error("Failed to open file:", err);
+    handleError("Error opening file");
+  });
 });
 
 ipcMain.on("file-content-updated", (_, textContent) => {

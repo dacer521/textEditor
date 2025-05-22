@@ -27,7 +27,7 @@ window.addEventListener("DOMContentLoaded", () => {
         }
         documentName.innerText = fileName;
         quill.enable();
-        quill.setText("");
+        // quill.setText("");
 
         quill.root.innerHTML = contentOrBuffer ?? "";
         quill.focus();
