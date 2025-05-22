@@ -24,7 +24,7 @@ function createWindow() {
         },
     });
     
-    mainWindow.webContents.openDevTools({ mode: "detach" });
+
     mainWindow.loadFile("index.html");
 
     const menu = Menu.buildFromTemplate([
